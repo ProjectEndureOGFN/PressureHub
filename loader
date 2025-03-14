@@ -1,394 +1,474 @@
 -- Local Script for Key System GUI
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
+-- Place this in StarterPlayerScripts or as a LocalScript in StarterGui
 
-local player = Players.LocalPlayer
+local player = game.Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Create the ScreenGui
+-- Key that will unlock the system (you should store this securely on server)
+local correctKey = "YOUR_SECRET_KEY_HERE" -- Replace with your actual key or implement server validation
+
+-- Create ScreenGui
 local keySystemGui = Instance.new("ScreenGui")
 keySystemGui.Name = "KeySystemGui"
-keySystemGui.ResetOnSpawn = false
 keySystemGui.IgnoreGuiInset = true
 keySystemGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+keySystemGui.DisplayOrder = 999 -- Make sure it appears above other GUIs
 keySystemGui.Parent = playerGui
 
--- Create the main frame
-local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(1, 0, 1, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-mainFrame.BorderSizePixel = 0
-mainFrame.Parent = keySystemGui
+-- Create background frame
+local background = Instance.new("Frame")
+background.Name = "Background"
+background.Size = UDim2.new(1, 0, 1, 0)
+background.BackgroundColor3 = Color3.fromRGB(15, 15, 20) -- Very dark background
+background.BorderSizePixel = 0
+background.Parent = keySystemGui
 
--- Create gradient background
-local backgroundGradient = Instance.new("UIGradient")
-backgroundGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 15))
+-- Create gradient for background
+local gradient = Instance.new("UIGradient")
+gradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 20)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 40))
 })
-backgroundGradient.Rotation = 45
-backgroundGradient.Parent = mainFrame
+gradient.Rotation = 45
+gradient.Parent = background
 
--- Create particle effects (decorative elements)
-for i = 1, 20 do
-    local particle = Instance.new("Frame")
-    particle.BackgroundColor3 = Color3.fromRGB(148, 87, 235)
-    particle.BackgroundTransparency = math.random(0.7, 0.9)
-    particle.BorderSizePixel = 0
-    particle.Size = UDim2.new(0, math.random(2, 5), 0, math.random(2, 5))
-    particle.Position = UDim2.new(math.random(), 0, math.random(), 0)
-    particle.Parent = mainFrame
-    
-    -- Animate particles
-    spawn(function()
-        while true do
-            local tweenInfo = TweenInfo.new(
-                math.random(3, 8),
-                Enum.EasingStyle.Sine,
-                Enum.EasingDirection.InOut
-            )
-            local tween = TweenService:Create(
-                particle, 
-                tweenInfo, 
-                {Position = UDim2.new(math.random(), 0, math.random(), 0)}
-            )
-            tween:Play()
-            wait(tweenInfo.Time)
-        end
-    end)
-end
+-- Create main container
+local mainContainer = Instance.new("Frame")
+mainContainer.Name = "MainContainer"
+mainContainer.Size = UDim2.new(0.4, 0, 0.5, 0)
+mainContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+mainContainer.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+mainContainer.BorderSizePixel = 0
+mainContainer.Visible = false -- Will be shown after initial animation
+mainContainer.Parent = keySystemGui
 
--- Create content container
-local contentFrame = Instance.new("Frame")
-contentFrame.Name = "ContentFrame"
-contentFrame.Size = UDim2.new(0, 500, 0, 400)
-contentFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
-contentFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-contentFrame.BorderSizePixel = 0
-contentFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-contentFrame.Parent = mainFrame
-
--- Add rounded corners to content frame
+-- Add corner radius to main container
 local cornerRadius = Instance.new("UICorner")
 cornerRadius.CornerRadius = UDim.new(0, 10)
-cornerRadius.Parent = contentFrame
+cornerRadius.Parent = mainContainer
 
--- Add drop shadow to content frame
-local dropShadow = Instance.new("ImageLabel")
-dropShadow.Name = "DropShadow"
-dropShadow.BackgroundTransparency = 1
-dropShadow.Size = UDim2.new(1, 30, 1, 30)
-dropShadow.Position = UDim2.new(0, -15, 0, -15)
-dropShadow.ZIndex = -1
-dropShadow.Image = "rbxassetid://5554236805"
-dropShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
-dropShadow.ScaleType = Enum.ScaleType.Slice
-dropShadow.SliceCenter = Rect.new(23, 23, 277, 277)
-dropShadow.Parent = contentFrame
+-- Add gradient to main container
+local containerGradient = Instance.new("UIGradient")
+containerGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(40, 40, 50)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(25, 25, 30))
+})
+containerGradient.Rotation = 45
+containerGradient.Parent = mainContainer
+
+-- Create glow effect
+local glow = Instance.new("ImageLabel")
+glow.Name = "Glow"
+glow.BackgroundTransparency = 1
+glow.Position = UDim2.new(0.5, 0, 0.5, 0)
+glow.Size = UDim2.new(1.2, 0, 1.2, 0)
+glow.AnchorPoint = Vector2.new(0.5, 0.5)
+glow.Image = "rbxassetid://8267404725" -- Replace with a suitable glow image
+glow.ImageColor3 = Color3.fromRGB(100, 50, 180)
+glow.ImageTransparency = 0.7
+glow.Parent = mainContainer
 
 -- Create header
-local headerFrame = Instance.new("Frame")
-headerFrame.Name = "HeaderFrame"
-headerFrame.Size = UDim2.new(1, 0, 0, 70)
-headerFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-headerFrame.BorderSizePixel = 0
-headerFrame.Parent = contentFrame
+local headerContainer = Instance.new("Frame")
+headerContainer.Name = "HeaderContainer"
+headerContainer.Size = UDim2.new(1, 0, 0.2, 0)
+headerContainer.BackgroundTransparency = 1
+headerContainer.Parent = mainContainer
 
--- Add rounded corners to header
-local headerCorners = Instance.new("UICorner")
-headerCorners.CornerRadius = UDim.new(0, 10)
-headerCorners.Parent = headerFrame
-
--- Only round top corners
-local headerCornerFix = Instance.new("Frame")
-headerCornerFix.Size = UDim2.new(1, 0, 0.5, 0)
-headerCornerFix.Position = UDim2.new(0, 0, 0.5, 0)
-headerCornerFix.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
-headerCornerFix.BorderSizePixel = 0
-headerCornerFix.ZIndex = 0
-headerCornerFix.Parent = headerFrame
-
--- Create header title
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Name = "TitleLabel"
-titleLabel.Size = UDim2.new(1, 0, 1, 0)
-titleLabel.Font = Enum.Font.GothamBold
-titleLabel.Text = "ACCESS KEY SYSTEM"
-titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 24
-titleLabel.BackgroundTransparency = 1
-titleLabel.Parent = headerFrame
+local headerTitle = Instance.new("TextLabel")
+headerTitle.Name = "Title"
+headerTitle.Size = UDim2.new(1, 0, 1, 0)
+headerTitle.BackgroundTransparency = 1
+headerTitle.Font = Enum.Font.GothamBold
+headerTitle.Text = "KEY SYSTEM"
+headerTitle.TextColor3 = Color3.fromRGB(230, 230, 250)
+headerTitle.TextSize = 24
+headerTitle.Parent = headerContainer
 
 -- Create accent line
 local accentLine = Instance.new("Frame")
 accentLine.Name = "AccentLine"
 accentLine.Size = UDim2.new(0.8, 0, 0, 2)
-accentLine.Position = UDim2.new(0.1, 0, 0, 70)
+accentLine.Position = UDim2.new(0.1, 0, 0.2, 5)
+accentLine.BackgroundColor3 = Color3.fromRGB(130, 60, 200)
 accentLine.BorderSizePixel = 0
-accentLine.BackgroundColor3 = Color3.fromRGB(148, 87, 235)
-accentLine.Parent = contentFrame
+accentLine.Parent = mainContainer
 
--- Create key icon
-local keyIcon = Instance.new("ImageLabel")
-keyIcon.Name = "KeyIcon"
-keyIcon.Size = UDim2.new(0, 80, 0, 80)
-keyIcon.Position = UDim2.new(0.5, -40, 0, 100)
-keyIcon.BackgroundTransparency = 1
-keyIcon.Image = "rbxassetid://3926307971"
-keyIcon.ImageRectOffset = Vector2.new(164, 324)
-keyIcon.ImageRectSize = Vector2.new(36, 36)
-keyIcon.ImageColor3 = Color3.fromRGB(148, 87, 235)
-keyIcon.Parent = contentFrame
+-- Create accent line gradient
+local accentGradient = Instance.new("UIGradient")
+accentGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(130, 60, 200)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(170, 80, 255)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(130, 60, 200))
+})
+accentGradient.Parent = accentLine
 
--- Create prompt text
-local promptLabel = Instance.new("TextLabel")
-promptLabel.Name = "PromptLabel"
-promptLabel.Size = UDim2.new(0.8, 0, 0, 40)
-promptLabel.Position = UDim2.new(0.1, 0, 0, 190)
-promptLabel.Font = Enum.Font.Gotham
-promptLabel.Text = "Enter your key to gain access"
-promptLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
-promptLabel.TextSize = 18
-promptLabel.BackgroundTransparency = 1
-promptLabel.Parent = contentFrame
+-- Create content container
+local contentContainer = Instance.new("Frame")
+contentContainer.Name = "ContentContainer"
+contentContainer.Size = UDim2.new(0.9, 0, 0.65, 0)
+contentContainer.Position = UDim2.new(0.05, 0, 0.25, 0)
+contentContainer.BackgroundTransparency = 1
+contentContainer.Parent = mainContainer
 
--- Create text input box
-local keyInputBox = Instance.new("TextBox")
-keyInputBox.Name = "KeyInputBox"
-keyInputBox.Size = UDim2.new(0.8, 0, 0, 50)
-keyInputBox.Position = UDim2.new(0.1, 0, 0, 230)
-keyInputBox.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-keyInputBox.BorderSizePixel = 0
-keyInputBox.Font = Enum.Font.Gotham
-keyInputBox.PlaceholderText = "XXXX-XXXX-XXXX-XXXX"
-keyInputBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 120)
-keyInputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-keyInputBox.TextSize = 18
-keyInputBox.ClearTextOnFocus = false
-keyInputBox.Text = ""
-keyInputBox.Parent = contentFrame
+-- Create welcome message
+local welcomeLabel = Instance.new("TextLabel")
+welcomeLabel.Name = "WelcomeLabel"
+welcomeLabel.Size = UDim2.new(1, 0, 0.2, 0)
+welcomeLabel.BackgroundTransparency = 1
+welcomeLabel.Font = Enum.Font.Gotham
+welcomeLabel.Text = "Welcome! Please enter the key to continue."
+welcomeLabel.TextColor3 = Color3.fromRGB(200, 200, 220)
+welcomeLabel.TextSize = 16
+welcomeLabel.Parent = contentContainer
 
--- Add rounded corners to input box
-local inputCorners = Instance.new("UICorner")
-inputCorners.CornerRadius = UDim.new(0, 6)
-inputCorners.Parent = keyInputBox
+-- Create key input box
+local keyInput = Instance.new("TextBox")
+keyInput.Name = "KeyInput"
+keyInput.Size = UDim2.new(1, 0, 0.2, 0)
+keyInput.Position = UDim2.new(0, 0, 0.3, 0)
+keyInput.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+keyInput.Font = Enum.Font.Gotham
+keyInput.PlaceholderText = "Enter your key here..."
+keyInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 170)
+keyInput.Text = ""
+keyInput.TextColor3 = Color3.fromRGB(230, 230, 250)
+keyInput.TextSize = 16
+keyInput.ClearTextOnFocus = false
+keyInput.Parent = contentContainer
+
+-- Add corner radius to input box
+local inputCorner = Instance.new("UICorner")
+inputCorner.CornerRadius = UDim.new(0, 6)
+inputCorner.Parent = keyInput
 
 -- Create submit button
 local submitButton = Instance.new("TextButton")
 submitButton.Name = "SubmitButton"
-submitButton.Size = UDim2.new(0.5, 0, 0, 50)
-submitButton.Position = UDim2.new(0.25, 0, 0, 300)
-submitButton.BackgroundColor3 = Color3.fromRGB(148, 87, 235)
-submitButton.BorderSizePixel = 0
+submitButton.Size = UDim2.new(0.5, 0, 0.15, 0)
+submitButton.Position = UDim2.new(0.25, 0, 0.65, 0)
+submitButton.BackgroundColor3 = Color3.fromRGB(130, 60, 200)
 submitButton.Font = Enum.Font.GothamBold
 submitButton.Text = "SUBMIT"
-submitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-submitButton.TextSize = 18
+submitButton.TextColor3 = Color3.fromRGB(230, 230, 250)
+submitButton.TextSize = 16
 submitButton.AutoButtonColor = false
-submitButton.Parent = contentFrame
+submitButton.Parent = contentContainer
 
--- Add rounded corners to submit button
-local buttonCorners = Instance.new("UICorner")
-buttonCorners.CornerRadius = UDim.new(0, 6)
-buttonCorners.Parent = submitButton
+-- Add corner radius to submit button
+local buttonCorner = Instance.new("UICorner")
+buttonCorner.CornerRadius = UDim.new(0, 6)
+buttonCorner.Parent = submitButton
 
--- Create status label
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Name = "StatusLabel"
-statusLabel.Size = UDim2.new(0.8, 0, 0, 30)
-statusLabel.Position = UDim2.new(0.1, 0, 0, 360)
-statusLabel.Font = Enum.Font.Gotham
-statusLabel.Text = ""
-statusLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
-statusLabel.TextSize = 16
-statusLabel.BackgroundTransparency = 1
-statusLabel.Parent = contentFrame
+-- Add status message
+local statusMessage = Instance.new("TextLabel")
+statusMessage.Name = "StatusMessage"
+statusMessage.Size = UDim2.new(1, 0, 0.15, 0)
+statusMessage.Position = UDim2.new(0, 0, 0.85, 0)
+statusMessage.BackgroundTransparency = 1
+statusMessage.Font = Enum.Font.Gotham
+statusMessage.Text = ""
+statusMessage.TextColor3 = Color3.fromRGB(230, 230, 250)
+statusMessage.TextSize = 14
+statusMessage.Parent = contentContainer
 
--- Add button hover and click effects
-submitButton.MouseEnter:Connect(function()
-    TweenService:Create(submitButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(168, 107, 255)}):Play()
-end)
+-- Create success screen (initially hidden)
+local successContainer = Instance.new("Frame")
+successContainer.Name = "SuccessContainer"
+successContainer.Size = UDim2.new(1, 0, 1, 0)
+successContainer.BackgroundTransparency = 1
+successContainer.Visible = false
+successContainer.Parent = mainContainer
 
-submitButton.MouseLeave:Connect(function()
-    TweenService:Create(submitButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(148, 87, 235)}):Play()
-end)
+local checkmarkImage = Instance.new("ImageLabel")
+checkmarkImage.Name = "Checkmark"
+checkmarkImage.Size = UDim2.new(0.3, 0, 0.3, 0)
+checkmarkImage.Position = UDim2.new(0.35, 0, 0.2, 0)
+checkmarkImage.BackgroundTransparency = 1
+checkmarkImage.Image = "rbxassetid://7733658504" -- Replace with a checkmark image
+checkmarkImage.ImageColor3 = Color3.fromRGB(130, 240, 180)
+checkmarkImage.Parent = successContainer
 
-submitButton.MouseButton1Down:Connect(function()
-    TweenService:Create(submitButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(128, 67, 215)}):Play()
-end)
+local successLabel = Instance.new("TextLabel")
+successLabel.Name = "SuccessLabel"
+successLabel.Size = UDim2.new(1, 0, 0.2, 0)
+successLabel.Position = UDim2.new(0, 0, 0.55, 0)
+successLabel.BackgroundTransparency = 1
+successLabel.Font = Enum.Font.GothamBold
+successLabel.Text = "ACCESS GRANTED"
+successLabel.TextColor3 = Color3.fromRGB(130, 240, 180)
+successLabel.TextSize = 24
+successLabel.Parent = successContainer
 
-submitButton.MouseButton1Up:Connect(function()
-    TweenService:Create(submitButton, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(168, 107, 255)}):Play()
-end)
+local loadingMessage = Instance.new("TextLabel")
+loadingMessage.Name = "LoadingMessage"
+loadingMessage.Size = UDim2.new(1, 0, 0.1, 0)
+loadingMessage.Position = UDim2.new(0, 0, 0.75, 0)
+loadingMessage.BackgroundTransparency = 1
+loadingMessage.Font = Enum.Font.Gotham
+loadingMessage.Text = "Loading game..."
+loadingMessage.TextColor3 = Color3.fromRGB(200, 200, 220)
+loadingMessage.TextSize = 16
+loadingMessage.Parent = successContainer
 
--- Create loading animation
-local loadingFrame = Instance.new("Frame")
-loadingFrame.Name = "LoadingFrame"
-loadingFrame.Size = UDim2.new(0, 50, 0, 50)
-loadingFrame.Position = UDim2.new(0.5, -25, 0, 300)
-loadingFrame.BackgroundTransparency = 1
-loadingFrame.Visible = false
-loadingFrame.Parent = contentFrame
+-- Create loading animation elements
+local loadingContainer = Instance.new("Frame")
+loadingContainer.Name = "LoadingContainer"
+loadingContainer.Size = UDim2.new(0.6, 0, 0, 4)
+loadingContainer.Position = UDim2.new(0.2, 0, 0.85, 0)
+loadingContainer.BackgroundColor3 = Color3.fromRGB(60, 60, 75)
+loadingContainer.BorderSizePixel = 0
+loadingContainer.Parent = successContainer
 
-for i = 1, 8 do
-    local dot = Instance.new("Frame")
-    dot.Size = UDim2.new(0, 6, 0, 6)
-    dot.Position = UDim2.new(0.5, 25 * math.cos(math.rad(i * 45)) - 3, 0.5, 25 * math.sin(math.rad(i * 45)) - 3)
-    dot.BackgroundColor3 = Color3.fromRGB(148, 87, 235)
-    dot.BorderSizePixel = 0
-    dot.Parent = loadingFrame
+-- Add corner radius to loading container
+local loadingCorner = Instance.new("UICorner")
+loadingCorner.CornerRadius = UDim.new(1, 0)
+loadingCorner.Parent = loadingContainer
+
+local loadingBar = Instance.new("Frame")
+loadingBar.Name = "LoadingBar"
+loadingBar.Size = UDim2.new(0, 0, 1, 0)
+loadingBar.BackgroundColor3 = Color3.fromRGB(130, 60, 200)
+loadingBar.BorderSizePixel = 0
+loadingBar.Parent = loadingContainer
+
+-- Add corner radius to loading bar
+local loadingBarCorner = Instance.new("UICorner")
+loadingBarCorner.CornerRadius = UDim.new(1, 0)
+loadingBarCorner.Parent = loadingBar
+
+-- Create initial loading animation
+local loadingScreen = Instance.new("Frame")
+loadingScreen.Name = "LoadingScreen"
+loadingScreen.Size = UDim2.new(1, 0, 1, 0)
+loadingScreen.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+loadingScreen.BorderSizePixel = 0
+loadingScreen.ZIndex = 10
+loadingScreen.Parent = keySystemGui
+
+-- Add gradient for loading screen
+local loadingGradient = Instance.new("UIGradient")
+loadingGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 20)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 10, 40))
+})
+loadingGradient.Rotation = 45
+loadingGradient.Parent = loadingScreen
+
+local loadingLogo = Instance.new("ImageLabel")
+loadingLogo.Name = "LoadingLogo"
+loadingLogo.Size = UDim2.new(0.2, 0, 0.2, 0)
+loadingLogo.Position = UDim2.new(0.4, 0, 0.4, 0)
+loadingLogo.BackgroundTransparency = 1
+loadingLogo.Image = "rbxassetid://14645972663" -- Replace with your logo image
+loadingLogo.ImageColor3 = Color3.fromRGB(130, 60, 200)
+loadingLogo.ZIndex = 11
+loadingLogo.Parent = loadingScreen
+
+local loadingText = Instance.new("TextLabel")
+loadingText.Name = "LoadingText"
+loadingText.Size = UDim2.new(1, 0, 0.1, 0)
+loadingText.Position = UDim2.new(0, 0, 0.65, 0)
+loadingText.BackgroundTransparency = 1
+loadingText.Font = Enum.Font.GothamBold
+loadingText.Text = "INITIALIZING..."
+loadingText.TextColor3 = Color3.fromRGB(230, 230, 250)
+loadingText.TextSize = 18
+loadingText.ZIndex = 11
+loadingText.Parent = loadingScreen
+
+-- Add button hover effects
+local function applyButtonEffects(button)
+    button.MouseEnter:Connect(function()
+        game:GetService("TweenService"):Create(button, TweenInfo.new(0.3), {
+            BackgroundColor3 = Color3.fromRGB(150, 80, 220)
+        }):Play()
+    end)
     
-    local cornerRadius = Instance.new("UICorner")
-    cornerRadius.CornerRadius = UDim.new(1, 0)
-    cornerRadius.Parent = dot
+    button.MouseLeave:Connect(function()
+        game:GetService("TweenService"):Create(button, TweenInfo.new(0.3), {
+            BackgroundColor3 = Color3.fromRGB(130, 60, 200)
+        }):Play()
+    end)
+button.MouseButton1Down:Connect(function()
+        game:GetService("TweenService"):Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(100, 40, 170)
+        }):Play()
+    end)
     
-    -- Animate the loading dots
-    spawn(function()
-        while true do
-            local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-            local tween = TweenService:Create(
-                dot, 
-                tweenInfo, 
-                {BackgroundTransparency = 1}
-            )
-            wait((i - 1) * 0.1)
-            tween:Play()
-            wait(0.5)
-            dot.BackgroundTransparency = 0
-        end
+    button.MouseButton1Up:Connect(function()
+        game:GetService("TweenService"):Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(150, 80, 220)
+        }):Play()
     end)
 end
 
--- Function to verify key
-local function verifyKey(key)
-    local success, result
+applyButtonEffects(submitButton)
+
+-- Add animations
+local tweenService = game:GetService("TweenService")
+
+-- Function to validate key
+local function validateKey()
+    local enteredKey = keyInput.Text
     
-    -- Show loading animation and hide button
-    submitButton.Visible = false
-    loadingFrame.Visible = true
-    statusLabel.Text = "Verifying key..."
-    
-    -- URL to fetch key from
-    local keyUrl = "https://cold-sun-a03d.reaai.workers.dev/verify"
-    
-    -- Try to verify the key
-    success = pcall(function()
-        local response = HttpService:RequestAsync({
-            Url = keyUrl,
-            Method = "POST",
-            Headers = {
-                ["Content-Type"] = "application/json"
-            },
-            Body = HttpService:JSONEncode({
-                key = key
-            })
-        })
+    if enteredKey == correctKey then
+        -- Key is correct
+        statusMessage.Text = "Key verified successfully!"
+        statusMessage.TextColor3 = Color3.fromRGB(130, 240, 180)
         
-        if response.Success then
-            result = HttpService:JSONDecode(response.Body)
-        else
-            result = {valid = false, message = "Failed to connect to server."}
-        end
-    end)
-    
-    -- Simulate verification delay
-    wait(1.5)
-    
-    -- Hide loading animation and show button
-    loadingFrame.Visible = false
-    submitButton.Visible = true
-    
-    if not success then
-        statusLabel.Text = "Error: Couldn't connect to verification server."
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-        return false
-    end
-    
-    if result.valid then
-        statusLabel.Text = "Key verified successfully!"
-        statusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
+        -- Hide content container and show success screen
+        tweenService:Create(contentContainer, TweenInfo.new(0.5), {
+            Transparency = 1
+        }):Play()
         
-        -- Show success animation
-        local successTween = TweenService:Create(
-            contentFrame,
-            TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
-            {BackgroundColor3 = Color3.fromRGB(35, 40, 45)}
-        )
-        successTween:Play()
-        
- -- Close the GUI after successful verification
-        wait(2)
-        TweenService:Create(mainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 1}):Play()
-        TweenService:Create(contentFrame, TweenInfo.new(0.5), {Position = UDim2.new(0.5, -250, 1.5, 0)}):Play()
         wait(0.5)
-        keySystemGui:Destroy()
+        contentContainer.Visible = false
+        successContainer.Visible = true
         
-        -- Grant access to the game's features
-        return true
+        -- Animate loading bar
+        local loadingTween = tweenService:Create(loadingBar, TweenInfo.new(3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+            Size = UDim2.new(1, 0, 1, 0)
+        })
+        loadingTween:Play()
+        
+        loadingTween.Completed:Connect(function()
+            -- Close the key system and let the player in
+            tweenService:Create(background, TweenInfo.new(1), {
+                BackgroundTransparency = 1
+            }):Play()
+            
+            tweenService:Create(mainContainer, TweenInfo.new(0.8), {
+                Position = UDim2.new(0.5, 0, 1.5, 0),
+                Transparency = 1
+            }):Play()
+            
+            wait(1)
+            keySystemGui:Destroy()
+            
+            -- Here you would trigger whatever happens after successful key entry
+            -- For example, fire a RemoteEvent to the server
+        end)
     else
-        statusLabel.Text = result.message or "Invalid key. Please try again."
-        statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+        -- Key is incorrect
+        statusMessage.Text = "Invalid key. Please try again."
+        statusMessage.TextColor3 = Color3.fromRGB(255, 100, 100)
         
-        -- Shake animation for invalid key
-        local originalPosition = contentFrame.Position
-        for i = 1, 5 do
-            contentFrame.Position = originalPosition + UDim2.new(0, 10 * math.sin(i * math.pi), 0, 0)
+        -- Shake animation for incorrect key
+        local originalPosition = mainContainer.Position
+        local shakeIntensity = 0.005
+        
+        for i = 1, 6 do
+            local direction = (i % 2 == 0) and 1 or -1
+            tweenService:Create(mainContainer, TweenInfo.new(0.05), {
+                Position = originalPosition + UDim2.new(shakeIntensity * direction, 0, 0, 0)
+            }):Play()
             wait(0.05)
         end
-        contentFrame.Position = originalPosition
         
-        return false
+        tweenService:Create(mainContainer, TweenInfo.new(0.05), {
+            Position = originalPosition
+        }):Play()
     end
 end
 
--- Connect button to key verification
-submitButton.MouseButton1Click:Connect(function()
-    local key = keyInputBox.Text
-    if key == "" then
-        statusLabel.Text = "Please enter a key."
-        statusLabel.TextColor3 = Color3.fromRGB(255, 200, 100)
-        return
-    end
-    
-    verifyKey(key)
-end)
+-- Connect submit button
+submitButton.MouseButton1Click:Connect(validateKey)
 
--- Add intro animation
-mainFrame.BackgroundTransparency = 1
-contentFrame.Position = UDim2.new(0.5, -250, -0.5, 0)
-
--- Wait for GUI to load
-wait(0.1)
-
--- Play intro animation
-TweenService:Create(mainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
-TweenService:Create(contentFrame, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -250, 0.5, -200)}):Play()
-
--- Allow pressing Enter to submit key
-keyInputBox.FocusLost:Connect(function(enterPressed)
+-- Also connect enter key
+keyInput.FocusLost:Connect(function(enterPressed)
     if enterPressed then
-        submitButton.MouseButton1Click:Fire()
+        validateKey()
     end
 end)
 
--- Add key formatting for better readability (e.g., XXXX-XXXX-XXXX-XXXX)
-keyInputBox:GetPropertyChangedSignal("Text"):Connect(function()
-    local text = keyInputBox.Text
-    text = text:gsub("[^%w]", "") -- Remove non-alphanumeric characters
-    
-    -- Format with dashes
-    local formatted = ""
-    for i = 1, #text do
-        formatted = formatted .. text:sub(i, i)
-        if i % 4 == 0 and i ~= #text then
-            formatted = formatted .. "-"
-        end
-    end
-    
-    -- Only update if different to avoid infinite loop
-    if formatted ~= keyInputBox.Text then
-        keyInputBox.Text = formatted
+-- Initial loading animation
+wait(1)
+
+-- Animate logo pulsing
+spawn(function()
+    while loadingScreen.Visible do
+        tweenService:Create(loadingLogo, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+            ImageTransparency = 0.2
+        }):Play()
+        wait(1)
+        tweenService:Create(loadingLogo, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+            ImageTransparency = 0
+        }):Play()
+        wait(1)
     end
 end)
+
+wait(2)
+
+-- Change loading text
+loadingText.Text = "PREPARING KEY SYSTEM..."
+wait(1.5)
+
+-- Fade out loading screen
+tweenService:Create(loadingScreen, TweenInfo.new(1), {
+    BackgroundTransparency = 1
+}):Play()
+
+tweenService:Create(loadingLogo, TweenInfo.new(0.8), {
+    ImageTransparency = 1
+}):Play()
+
+tweenService:Create(loadingText, TweenInfo.new(0.8), {
+    TextTransparency = 1
+}):Play()
+
+wait(1)
+loadingScreen.Visible = false
+
+-- Animate main container appearance
+mainContainer.Visible = true
+mainContainer.Position = UDim2.new(0.5, 0, 1.5, 0)
+
+tweenService:Create(mainContainer, TweenInfo.new(0.8, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+    Position = UDim2.new(0.5, 0, 0.5, 0)
+}):Play()
+
+-- Add particle effects (optional)
+local particles = Instance.new("ParticleEmitter")
+particles.Texture = "rbxassetid://8159992579" -- Replace with a particle texture
+particles.Color = ColorSequence.new(Color3.fromRGB(130, 60, 200))
+particles.Size = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.5),
+    NumberSequenceKeypoint.new(1, 0)
+})
+particles.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0.8),
+    NumberSequenceKeypoint.new(1, 1)
+})
+particles.Speed = NumberRange.new(20, 50)
+particles.Rotation = NumberRange.new(0, 360)
+particles.RotSpeed = NumberRange.new(-90, 90)
+particles.Lifetime = NumberRange.new(1, 2)
+particles.Rate = 5
+particles.Acceleration = Vector3.new(0, 10, 0)
+particles.SpreadAngle = Vector2.new(50, 50)
+particles.Parent = glow
+
+-- Create and set up a frame for key system information
+local infoContainer = Instance.new("Frame")
+infoContainer.Name = "InfoContainer"
+infoContainer.Size = UDim2.new(0.9, 0, 0, 20)
+infoContainer.Position = UDim2.new(0.05, 0, 0.95, 0)
+infoContainer.BackgroundTransparency = 1
+infoContainer.Parent = keySystemGui
+
+local infoText = Instance.new("TextLabel")
+infoText.Name = "InfoText"
+infoText.Size = UDim2.new(1, 0, 1, 0)
+infoText.BackgroundTransparency = 1
+infoText.Font = Enum.Font.Gotham
+infoText.Text = "© 2025 Your Game Name | Secure Key System v1.0"
+infoText.TextColor3 = Color3.fromRGB(130, 130, 150)
+infoText.TextSize = 12
+infoText.TextTransparency = 0.5
+infoText.Parent = infoContainer
+
+-- Return the main GUI in case you want to reference it elsewhere
+return keySystemGui
